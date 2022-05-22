@@ -31,7 +31,7 @@ class DropboxBase(object):
     __metaclass__ = ABCMeta
 
     @abstractmethod
-    def request(self, route, namespace, arg, arg_binary=None):
+    def request(self, route, namespace, arg, arg_binary=None, partial=None):
         pass
 
     # ------------------------------------------
@@ -1396,7 +1396,8 @@ class DropboxBase(object):
 
     def files_download(self,
                        path,
-                       rev=None):
+                       rev=None,
+                       partial=None):
         """
         Download a file from a user's Dropbox.
 
@@ -1425,6 +1426,7 @@ class DropboxBase(object):
             'files',
             arg,
             None,
+            partial=partial,
         )
         return r
 

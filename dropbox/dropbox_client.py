@@ -275,7 +275,8 @@ class _DropboxTransport(object):
                 namespace,
                 request_arg,
                 request_binary,
-                timeout=None):
+                timeout=None,
+                partial=None):
         """
         Makes a request to the Dropbox API and in the process validates that
         the route argument and result are the expected data types. The
@@ -326,7 +327,8 @@ class _DropboxTransport(object):
                                                   serialized_arg,
                                                   auth_type,
                                                   request_binary,
-                                                  timeout=timeout)
+                                                  timeout=timeout,
+                                                  partial=partial)
         decoded_obj_result = json.loads(res.obj_result)
         if isinstance(res, RouteResult):
             returned_data_type = route.result_type
@@ -414,7 +416,8 @@ class _DropboxTransport(object):
                             request_arg,
                             auth_type,
                             request_binary,
-                            timeout=None):
+                            timeout=None,
+                            partial=None):
         """
         Makes a request to the Dropbox API, taking a JSON-serializable Python
         object as an argument, and returning one as a response.
@@ -441,7 +444,8 @@ class _DropboxTransport(object):
                                                   serialized_arg,
                                                   auth_type,
                                                   request_binary,
-                                                  timeout=timeout)
+                                                  timeout=timeout,
+                                                  partial=partial)
         # This can throw a ValueError if the result is not deserializable,
         # but that would be completely unexpected.
         deserialized_result = json.loads(res.obj_result)
@@ -457,7 +461,8 @@ class _DropboxTransport(object):
                                        request_json_arg,
                                        auth_type,
                                        request_binary,
-                                       timeout=None):
+                                       timeout=None,
+                                       partial=None):
         """
         See :meth:`request_json_object` for description of parameters.
 
@@ -476,7 +481,8 @@ class _DropboxTransport(object):
                                                 request_json_arg,
                                                 auth_type,
                                                 request_binary,
-                                                timeout=timeout)
+                                                timeout=timeout,
+                                                partial=partial)
             except AuthError as e:
                 if e.error and e.error.is_expired_access_token():
                     if has_refreshed:
@@ -519,7 +525,8 @@ class _DropboxTransport(object):
                             request_json_arg,
                             auth_type,
                             request_binary,
-                            timeout=None):
+                            timeout=None,
+                            partial=None):
         """
         See :meth:`request_json_string_with_retry` for description of
         parameters.
@@ -559,6 +566,17 @@ class _DropboxTransport(object):
             pass
         else:
             raise BadInputException('Unhandled auth type: {}'.format(auth_type))
+
+        if partial is not None:
+            start = partial[0]
+            length = partial[1]
+            if start is not None:
+                if length:
+                    headers['Range'] = 'bytes=%s-%s' % (start, start + length - 1)
+                else:
+                    headers['Range'] = 'bytes=%s-' % start
+            elif length is not None:
+                headers['Range'] = 'bytes=-%s' % length
 
         # The contents of the body of the HTTP request
         body = None
